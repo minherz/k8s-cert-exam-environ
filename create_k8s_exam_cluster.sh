@@ -38,7 +38,7 @@ fi
 LOCATION=${LOCATION:="us-central1"}
 ZONE=${ZONE:="$LOCATION-a"}
 
-echo "🕸 Creating Kubernetes v20 cluster..."
+echo "🕸 Creating Kubernetes v21 cluster..."
 
 # create control plane (master node)
 gcloud beta compute instances create k8s-master --zone=$ZONE \
@@ -51,7 +51,7 @@ truncate -s 0 /var/log/syslog
 cat > /etc/install.sh <<EOF
 #! /bin/bash
 sudo kubeadm reset -f
-KUBE_VERSION=1.20.2
+KUBE_VERSION=1.21.5
 sudo kubeadm init --kubernetes-version=${KUBE_VERSION} --ignore-preflight-errors=NumCPU --skip-token-print
 mkdir -p ~/.kube
 sudo cp -i /etc/kubernetes/admin.conf ~/.kube/config
