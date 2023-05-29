@@ -24,7 +24,8 @@ The repository has the following scripts:
 When executed the script creates in the project a base image that is further used to provision a master and a worker Kubernetes nodes.
 The image name will be `k8s-exam-base` and it will be set to the `ubuntu-os-cloud` image family.
 
-> *NOTE:* Right now the script isn't idempotent.
+> **Warning**
+> Right now the script isn't idempotent.
 
 ### create_k8s_exam_cluster.sh
 
@@ -32,14 +33,20 @@ The script provisions a master (`k8s-master`) and a worker (`k8s-node`) Kubernet
 A location of the nodes can be defined by providing `LOCATION` environment with a value set to one of [GCP regions](https://cloud.google.com/compute/docs/regions-zones#available).
 The VMs are always provisioned into `*-a` zone.
 
-> *NOTE:* Right now the script does not check for:
+> **Warning**
+> Ccripts do not check for:
 >
 > * `k8s-exam-base` image existence
-> * availability of `*-a` zone in the provided location
-> * existing VMs with the same names in this location
+> * availability of `*-a` zone in the provided region
+> * uniqueness of the VM resource names
 
 ### k8s-base-image-startup.sh
 
-The startup script launched when [create_image.sh](#create_image.sh) creates a base VM image for the Kubernetes nodes.
+`k8s-base-image-startup.sh` is auxiliary script that is used as a [startup script][1].
+It is configured to launch as a part of the process of the base VM image creation.
+`KUBE_VERSION` environment variable controls the version of Kubernetes to be used.
+You may want to update its value if it does not suite your needs.
 The startup script is too complex to integrate it into the script itself.
 It was easier to define it as a stand-alone script instead of maintaining it in the body of the [create_image.sh](#create_image.sh).
+
+[1]: https://cloud.google.com/compute/docs/instances/startup-scripts/linux#passing-local

@@ -28,7 +28,7 @@ wait_startup_script_to_finish() {
     echo ""
 }
 
-PROJECT=$(gcloud config get-value project)
+PROJECT="$(gcloud config get project)"
 if [[ -z "$PROJECT" ]]
 then
     echo "Please setup Project Id using 'gcloud config set project PROJECT_ID'"
@@ -43,7 +43,7 @@ VM_NAME=cks-node-image
 echo "🖼 Creating VM image..."
 gcloud compute instances create $VM_NAME --zone="$ZONE" \
 --machine-type=e2-medium \
---image=ubuntu-1804-bionic-v20210415 \
+--image=ubuntu-1804-bionic-v20230510 \
 --image-project=ubuntu-os-cloud \
 --boot-disk-size=50GB \
 --scopes=https://www.googleapis.com/auth/cloud-platform \

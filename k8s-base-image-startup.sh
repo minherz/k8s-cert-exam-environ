@@ -26,33 +26,37 @@ echo 'alias c=clear' >> ~/.bashrc
 echo 'complete -F __start_kubectl k' >> ~/.bashrc
 sed -i '1s/^/force_color_prompt=yes\n/' ~/.bashrc
 
-### install k8s and docker
-apt-get remove -y docker.io kubelet kubeadm kubectl kubernetes-cni
-apt-get autoremove -y
-apt-get install -y etcd-client vim build-essential
-systemctl daemon-reload
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
-deb http://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-KUBE_VERSION=1.21.5
+echo "Installing containerd..."
+# install containerd runtime
+wget https://github.com/containerd/containerd/releases/download/v1.6.8/containerd-1.6.8-linux-amd64.tar.gz
+tar Cxzvf /usr/local containerd-1.6.8-linux-amd64.tar.gz
+# install runc cli
+wget https://github.com/opencontainers/runc/releases/download/v1.1.3/runc.amd64
+install -m 755 runc.amd64 /usr/local/sbin/runc
+# install CNI plugin
+wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
+mkdir -p /opt/cni/bin
+tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
+# cleanup
+rm containerd-1.6.8-linux-amd64.tar.gz runc.amd64 cni-plugins-linux-amd64-v1.1.1.tgz
+# setup containerd config
+mkdir /etc/containerd
+containerd config default | tee /etc/containerd/config.toml
+sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+curl -L https://raw.githubusercontent.com/containerd/containerd/main/containerd.service -o /etc/systemd/system/containerd.service
+systemctl daemon-reloadsudo systemctl enable --now containerd
+
+echo "Installing Kubernetes..."
+### install k8s
 apt-get update
-apt-get install -y docker.io kubelet=${KUBE_VERSION}-00 kubeadm=${KUBE_VERSION}-00 kubectl=${KUBE_VERSION}-00 kubernetes-cni=0.8.7-00
-cat > /etc/docker/daemon.json <<EOF
-{
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "storage-driver": "overlay2"
-}
-EOF
-mkdir -p /etc/systemd/system/docker.service.d
-# Restart docker.
-systemctl daemon-reload
-systemctl restart docker
-# start docker on reboot
-systemctl enable docker
-docker info | grep -i "storage"
-docker info | grep -i "cgroup"
+apt-get install -y apt-transport-https ca-certificates curl
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+KUBE_VERSION=1.27.1
+apt-get update
+apt-get install -y kubelet=${KUBE_VERSION}-00 kubeadm=${KUBE_VERSION}-00 kubectl=${KUBE_VERSION}-00
+apt-mark hold kubelet kubeadm kubectl
+# start kubelet
 systemctl enable kubelet && systemctl start kubelet
 kubeadm reset -f
 echo "finished."
