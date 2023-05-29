@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+apt-get update
 ### setup terminal
 apt-get install -y bash-completion binutils
 echo 'colorscheme ron' >> ~/.vimrc
@@ -36,6 +37,7 @@ install -m 755 runc.amd64 /usr/local/sbin/runc
 # install CNI plugin
 wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
 mkdir -p /opt/cni/bin
+chmod 755 /etc/apt/keyrings
 tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
 # cleanup
 rm containerd-1.6.8-linux-amd64.tar.gz runc.amd64 cni-plugins-linux-amd64-v1.1.1.tgz
@@ -44,12 +46,14 @@ mkdir /etc/containerd
 containerd config default | tee /etc/containerd/config.toml
 sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 curl -L https://raw.githubusercontent.com/containerd/containerd/main/containerd.service -o /etc/systemd/system/containerd.service
-systemctl daemon-reloadsudo systemctl enable --now containerd
+systemctl daemon-reload
+systemctl enable --now containerd
 
 echo "Installing Kubernetes..."
 ### install k8s
-apt-get update
 apt-get install -y apt-transport-https ca-certificates curl
+mkdir -p /etc/apt/keyrings
+chmod 755 /etc/apt/keyrings
 curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
 KUBE_VERSION=1.27.1
