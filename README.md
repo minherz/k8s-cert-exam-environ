@@ -1,5 +1,8 @@
 # Kubernetes Certification Exam Environment
 
+> [!WARNING]
+> The current version of the script is not stable.
+
 All Linux Foundation Kubernetes certification exams use two node clusters with the most recent stable version of Kubernetes (now v20).
 When learning toward certification exams it comes handy to be able to enroll new Kubernetes clusters that are similar to those used in the exam environment.
 This project uses Google Compute Engine to provision VMs and then `kubeadm` to install the two node cluster.
@@ -34,7 +37,7 @@ A location of the nodes can be defined by providing `LOCATION` environment with 
 The VMs are always provisioned into `*-a` zone.
 
 > **Warning**
-> Ccripts do not check for:
+> Make sure the following conditions are fulfilled:
 >
 > * `k8s-exam-base` image existence
 > * availability of `*-a` zone in the provided region

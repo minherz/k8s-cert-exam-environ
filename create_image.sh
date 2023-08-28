@@ -35,27 +35,29 @@ then
     exit 1
 fi
 
-NETWORK="${1:-default}"
-SUBNET="${2:-default}"
-LOCATION=${LOCATION:-"us-central1"}
-ZONE=${ZONE:-"$LOCATION-a"}
-VM_NAME=cks-node-image
+NETWORK="${1:-"default"}"; readonly NETWORK
+SUBNET="${2:-"default"}"; readonly SUBNET
+LOCATION=${LOCATION:-"us-central1"}; readonly LOCATION
+ZONE=${ZONE:-"${LOCATION}-a"}; readonly ZONE
+VM_NAME="k8s-base-image"; readonly VM_NAME
+IMG_FAMILY="ubuntu-os-cloud"; readonly IMG_FAMILY
 echo "🖼 Creating VM image..."
-gcloud compute instances create $VM_NAME --zone="$ZONE" \
---machine-type=e2-medium \
---image=ubuntu-1804-bionic-v20230510 \
---image-project=ubuntu-os-cloud \
---boot-disk-size=50GB \
---scopes=https://www.googleapis.com/auth/cloud-platform \
---metadata-from-file startup-script=./k8s-base-image-startup.sh \
---network="$NETWORK" --subnet="$SUBNET"
+gcloud compute instances create "${VM_NAME}" --zone="${ZONE}" \
+    --machine-type=e2-medium \
+    --boot-disk-size=100GB \
+    --can-ip-forward \
+    --image-family ubuntu-2204-lts \
+    --image-project "${IMG_FAMILY}" \
+    --scopes=https://www.googleapis.com/auth/cloud-platform \
+    --metadata-from-file startup-script=./k8s-base-image-startup.sh \
+    --network="${NETWORK}" --subnet="${SUBNET}"
 
-wait_startup_script_to_finish $VM_NAME $ZONE
+wait_startup_script_to_finish "${VM_NAME}" "${ZONE}"
 
 # create custom image
-gcloud compute instances stop $VM_NAME --zone=$ZONE
-gcloud compute images create k8s-exam-base \
---source-disk=$VM_NAME \
---source-disk-zone=$ZONE \
---family=ubuntu-os-cloud \
---storage-location=$LOCATION
+gcloud compute instances stop "${VM_NAME}" --zone="${ZONE}"
+gcloud compute images create k8s-base-image \
+--source-disk="${VM_NAME}" \
+--source-disk-zone="${ZONE}" \
+--family="${IMG_FAMILY}" \
+--storage-location="${LOCATION}"
